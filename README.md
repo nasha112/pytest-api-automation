@@ -48,10 +48,7 @@
 ## ⚡ 快速开始
 
 ### 1️⃣ 克隆项目
-```bash
-git clone https://github.com/你的用户名/pytest-api-automation-framework.git
-cd pytest-api-automation-framework
-```
+
 
 ### 2️⃣ 创建虚拟环境
 ```bash
