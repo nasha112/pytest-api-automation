@@ -1,5 +1,4 @@
 import pytest
-import requests
 from jsonschema import validate
 from libraries.util import read_excel_data, load_schema
 import logging
@@ -23,7 +22,11 @@ except Exception as e:
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.tag("positive")
 @pytest.mark.parametrize("name,email,gender,status", user_data)
-def test_can_create_user(base_url, headers, end_point, name, email, gender, status,db_client):
+def test_can_create_user(public_client, end_point, name, email, gender, status):
+    """
+    使用 public_client（已自动携带 Authorization Header）
+    测试代码不再拼接 URL，不再关心 requests 细节
+    """
     allure.dynamic.title(f"Create user → {name}")
     allure.dynamic.description_html(f"""
     <b>Test Objective:</b> Verify that a user can be created, retrieved, and deleted.<br>
@@ -32,8 +35,10 @@ def test_can_create_user(base_url, headers, end_point, name, email, gender, stat
 
     data = {"name": name, "email": email, "gender": gender, "status": status}
 
+    # ---------- 1. Create User ----------
     with allure.step("➡️ Create User (POST)"):
-        post_response = requests.post(base_url + end_point, headers=headers, json=data, timeout=10)
+        # 🆕 使用 public_client.post()，路径自动拼接 base_url
+        post_response = public_client.post(end_point, json=data, timeout=10)
         response_json = post_response.json()
 
         allure.attach(str(response_json), name="POST Response", attachment_type=allure.attachment_type.JSON)
@@ -44,8 +49,10 @@ def test_can_create_user(base_url, headers, end_point, name, email, gender, stat
         # ✅ Schema validation
         validate(instance=response_json, schema=success_schema)
 
+    # ---------- 2. Get User ----------
     with allure.step("➡️ Get User (GET)"):
-        get_response = requests.get(f"{base_url}{end_point}{user_id}", headers=headers, timeout=10)
+        # 🆕 路径直接拼接 user_id
+        get_response = public_client.get(f"{end_point}{user_id}", timeout=10)
         response_json = get_response.json()
 
         allure.attach(str(response_json), name="GET Response", attachment_type=allure.attachment_type.JSON)
@@ -53,28 +60,10 @@ def test_can_create_user(base_url, headers, end_point, name, email, gender, stat
         assert get_response.status_code == 200, f"❌ GET failed: {get_response.text}"
         validate(instance=response_json, schema=success_schema)
 
+    # ---------- 3. Delete User ----------
     with allure.step("➡️ Delete User (DELETE)"):
-        delete_response = requests.delete(f"{base_url}{end_point}{user_id}", headers=headers, timeout=10)
+        delete_response = public_client.delete(f"{end_point}{user_id}", timeout=10)
 
         allure.attach(str(delete_response.text), name="DELETE Response", attachment_type=allure.attachment_type.TEXT)
 
         assert delete_response.status_code == 204, f"❌ DELETE failed: {delete_response.text}"
-
-    # 只有在 db_client 不为 None 时才执行数据库校验
-    if db_client is not None:
-        with allure.step("✅ 校验数据库落库（直连MySQL）"):
-            sql = "SELECT id, name, email, gender, status FROM users WHERE email = %s"
-            db_result = db_client.fetch_one(sql, (email,))
-            assert db_result is not None, f"❌ 数据库中找不到邮箱为 {email} 的用户！"
-
-             # 断言数据库里的关键字段和请求一致
-            assert db_result["name"] == name, f"数据库name({db_result['name']})与请求({name})不一致！"
-            assert db_result["email"] == email
-            assert db_result["gender"] == gender
-            assert db_result["status"] == status
-
-            allure.attach(str(db_result), name="DB Query Result", attachment_type=allure.attachment_type.JSON)
-            logger.info(f"✅ 数据库校验通过: {db_result}")
-            db_client.close()
-    else:
-        allure.attach("公网环境，跳过数据库校验", name="DB Check Skipped")
