@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API自动化测试项目 · 完整测试流程总览</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif; background:#f5f7fa; color:#2b3a4a; line-height:1.6; padding:24px 16px; }
+  .wrap { max-width:1180px; margin:0 auto; }
+  header { text-align:center; margin-bottom:24px; }
+  header h1 { font-size:26px; color:#0f766e; letter-spacing:1px; }
+  header p { font-size:14px; color:#5b6b7b; margin-top:6px; }
+  .section-title { font-size:16px; font-weight:700; color:#0f766e; margin:26px 0 12px; padding-left:10px; border-left:4px solid #0f766e; }
+  /* 被测对象与技术栈 */
+  .targets { display:flex; flex-wrap:wrap; gap:14px; }
+  .tcard { flex:1 1 300px; background:#fff; border:1px solid #dde5ec; border-radius:10px; padding:16px 18px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+  .tcard h3 { font-size:16px; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  .badge { display:inline-block; font-size:12px; padding:2px 10px; border-radius:20px; color:#fff; }
+  .b-public { background:#0e7490; }
+  .b-local  { background:#b45309; }
+  .tcard ul { list-style:none; font-size:14px; color:#3d4d5d; }
+  .tcard li { padding:3px 0 3px 18px; position:relative; }
+  .tcard li::before { content:"▪"; position:absolute; left:2px; color:#0f766e; }
+  .stack { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .chip { font-size:13px; background:#e6f4f2; color:#0f766e; border:1px solid #b7ddd8; border-radius:20px; padding:3px 12px; }
+  /* 六阶段流程 */
+  .flow { display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; }
+  .phase { flex:1 1 160px; min-width:160px; background:#fff; border-radius:10px; border:1px solid #dde5ec; border-top:4px solid #0f766e; padding:12px 14px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+  .phase .no { font-size:12px; color:#fff; background:#0f766e; border-radius:4px; display:inline-block; padding:1px 8px; margin-bottom:6px; }
+  .phase h4 { font-size:15px; color:#14423c; margin-bottom:6px; }
+  .phase ul { list-style:none; font-size:13px; color:#4a5a6a; }
+  .phase li { padding:2px 0 2px 14px; position:relative; }
+  .phase li::before { content:"›"; position:absolute; left:0; color:#0f766e; font-weight:700; }
+  .arrow { align-self:center; font-size:22px; color:#0f766e; font-weight:700; flex:0 0 auto; }
+  /* 成果数据 */
+  .stats { display:flex; flex-wrap:wrap; gap:14px; }
+  .stat { flex:1 1 200px; background:#fff; border-radius:10px; border:1px solid #dde5ec; padding:16px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+  .stat .num { font-size:28px; font-weight:800; color:#0f766e; }
+  .stat .label { font-size:13px; color:#5b6b7b; margin-top:4px; }
+  footer { margin-top:26px; font-size:12px; color:#8a99a8; text-align:center; }
+  @media (max-width:720px){ .arrow{ transform:rotate(90deg); } .phase{ flex:1 1 100%; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>API 自动化测试项目 · 完整测试流程总览</h1>
+    <p>Python + Pytest + Requests ｜ 从需求分析到 CI 集成的全链路拆解（基于项目真实执行记录）</p>
+  </header>
+
+  <!-- 被测对象 -->
+  <div class="section-title">被测对象</div>
+  <div class="targets">
+    <div class="tcard">
+      <h3>① GoRest 公网 API <span class="badge b-public">public</span></h3>
+      <ul>
+        <li>用户管理：创建 / 查询 / 删除 全生命周期</li>
+        <li>Bearer Token 鉴权，401 / 422 异常场景</li>
+        <li>JSON Schema 响应结构校验</li>
+      </ul>
+    </div>
+    <div class="tcard">
+      <h3>② 本地考试管理系统 <span class="badge b-local">local</span></h3>
+      <ul>
+        <li>登录 + 考试 / 试卷 / 规则 / 题库 / 试题 5 大核心接口</li>
+        <li>三层断言：HTTP → 业务码 → 结构/业务规则</li>
+        <li>分页 current / size 边界测试</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-title">技术栈</div>
+  <div class="stack">
+    <span class="chip">Python</span><span class="chip">pytest</span><span class="chip">requests</span>
+    <span class="chip">pytest Fixture</span><span class="chip">parametrize 参数化</span><span class="chip">openpyxl 数据驱动</span>
+    <span class="chip">jsonschema 校验</span><span class="chip">Allure 报告</span><span class="chip">pytest-env 环境切换</span>
+    <span class="chip">GitHub Actions</span><span class="chip">Jenkins</span>
+  </div>
+
+  <!-- 六阶段流程 -->
+  <div class="section-title">完整测试流程（六阶段闭环）</div>
+  <div class="flow">
+
+    <div class="phase">
+      <span class="no">阶段 1</span>
+      <h4>需求分析</h4>
+      <ul>
+        <li>接口清单与鉴权梳理</li>
+        <li>测试范围矩阵界定</li>
+        <li>环境 / 账号 / 数据准备</li>
+        <li>登录账号经数据库反查确认</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+
+    <div class="phase">
+      <span class="no">阶段 2</span>
+      <h4>方案设计</h4>
+      <ul>
+        <li>技术选型（pytest + requests）</li>
+        <li>四层框架架构设计</li>
+        <li>冒烟/正向/负向/边界分级</li>
+        <li>Fixture 依赖链规划</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+
+    <div class="phase">
+      <span class="no">阶段 3</span>
+      <h4>用例设计</h4>
+      <ul>
+        <li>等价类 / 边界值 / 错误推测</li>
+        <li>用户生命周期闭环用例</li>
+        <li>分页边界参数化（6 组）</li>
+        <li>Excel / JSON 数据驱动</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+
+    <div class="phase">
+      <span class="no">阶段 4</span>
+      <h4>测试执行</h4>
+      <ul>
+        <li>环境切换 --env=public/local</li>
+        <li>登录 Token 全会话复用</li>
+        <li>三层断言逐层校验</li>
+        <li>Allure 步骤与附件留痕</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+
+    <div class="phase">
+      <span class="no">阶段 5</span>
+      <h4>Bug 跟踪</h4>
+      <ul>
+        <li>失败分类：failed / broken</li>
+        <li>根因四类：产品/预期/脚本/环境</li>
+        <li>4 个真实缺陷案例闭环</li>
+        <li>结论沉淀进报告与注释</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+
+    <div class="phase">
+      <span class="no">阶段 6</span>
+      <h4>CI 与报告</h4>
+      <ul>
+        <li>GitHub Actions 自动执行</li>
+        <li>Jenkins 流水线 Stage View</li>
+        <li>Allure 报告 + Pages 发布</li>
+        <li>Token 脱敏安全处理</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- 成果数据 -->
+  <div class="section-title">关键成果</div>
+  <div class="stats">
+    <div class="stat"><div class="num">24</div><div class="label">条用例（含参数化实例）</div></div>
+    <div class="stat"><div class="num">100%</div><div class="label">GoRest 7 用例全通过（129s）</div></div>
+    <div class="stat"><div class="num">4 类</div><div class="label">真实缺陷闭环（脚本/环境/预期）</div></div>
+    <div class="stat"><div class="num">2 条</div><div class="label">CI 流水线（Actions + Jenkins）</div></div>
+    <div class="stat"><div class="num">5 个</div><div class="label">核心接口冒烟三层校验</div></div>
+  </div>
+
+  <footer>依据项目真实代码与执行痕迹整理（allure-results、results.xml、Jenkins Stage View 截图）</footer>
+
+</div>
+</body>
+</html>
