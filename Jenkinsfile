@@ -2,13 +2,6 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'master',
-                    url: 'https://github.com/nasha112/pytest-api-automation.git'
-            }
-        }
-
         stage('Setup Python') {
             steps {
                 bat '''
@@ -23,7 +16,6 @@ pipeline {
         stage('Run Tests') {
             steps {
                 bat '''
-                    mkdir reports allure-results
                     venv\\Scripts\\python -m pytest --ignore=tests/local --maxfail=1 --disable-warnings -q --alluredir=allure-results --junitxml=allure-results/junit-results.xml
                 '''
             }
@@ -38,7 +30,9 @@ pipeline {
 
         stage('Allure Report') {
             steps {
-                allure includeProperties: false, jdk: '', results: [[path: 'allure-results']]
+                bat '''
+                    allure generate allure-results -o _site --clean
+                '''
             }
         }
     }
