@@ -2,9 +2,9 @@ name: 🧪 Pytest with Allure
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
   test:
@@ -28,7 +28,7 @@ jobs:
       - name: Run pytest with Allure
         run: |
           mkdir -p reports
-          pytest -v --alluredir=reports/
+          pytest -v --alluredir=reports/ --ignore=tests/local
 
       - name: Add Allure environment & executor info
         run: |

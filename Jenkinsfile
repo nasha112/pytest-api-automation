@@ -4,17 +4,17 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/rijukrroy/pytest-api-automation-framework.git'
+                git branch: 'master',
+                    url: 'https://github.com/nasha112/pytest-api-automation.git'
             }
         }
 
         stage('Setup Python') {
             steps {
-                sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install --upgrade pip
+                bat '''
+                    python -m venv venv
+                    call venv\\Scripts\\activate.bat
+                    python -m pip install --upgrade pip
                     pip install -r requirements.txt
                 '''
             }
@@ -22,18 +22,16 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                sh '''
-                    mkdir -p reports allure-results
-                    venv/bin/python -m pytest --maxfail=1 --disable-warnings -q \
-                        --alluredir=allure-results \
-                        --junitxml=allure-results/junit-results.xml
+                bat '''
+                    mkdir reports allure-results
+                    venv\\Scripts\\python -m pytest --ignore=tests/local --maxfail=1 --disable-warnings -q --alluredir=allure-results --junitxml=allure-results/junit-results.xml
                 '''
             }
         }
 
         stage('Archive Results') {
             steps {
-                archiveArtifacts artifacts: 'reports/test_log.log', allowEmptyArchive: true
+                archiveArtifacts artifacts: 'allure-results/**', allowEmptyArchive: true
                 junit 'allure-results/junit-results.xml'
             }
         }
